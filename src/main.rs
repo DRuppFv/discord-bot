@@ -1,4 +1,7 @@
-use crate::{commands::general::ping::ping, primitives::State};
+use crate::{
+    commands::{general::ping::ping, information::status::status},
+    primitives::State,
+};
 use anyhow::{Context, Result};
 use dotenv::dotenv;
 use poise::{
@@ -6,12 +9,15 @@ use poise::{
     serenity_prelude::{CacheHttp, GatewayIntents, GuildId},
     Framework, FrameworkOptions,
 };
-use std::{env, fs, path::Path, process};
+use std::{env, fs, path::Path, process, time::Instant};
+use sysinfo::{System, SystemExt};
+use tokio::sync::RwLock;
 use tracing::log::info;
 use tracing_subscriber::EnvFilter;
 
 mod commands;
 mod primitives;
+mod utils;
 
 fn copy_dotenv() -> Result<()> {
     if !Path::new(".env").exists() {
@@ -42,7 +48,7 @@ async fn main() -> Result<()> {
         .parse()
         .context("Failed to parse $DISCORD_GUILD_ID as a valid integer!")?;
 
-    let commands = vec![ping()];
+    let commands = vec![ping(), status()];
 
     let framework = Framework::builder()
         .token(env::var("DISCORD_TOKEN").context("Failed to read $DISCORD_TOKEN")?)
@@ -54,7 +60,11 @@ async fn main() -> Result<()> {
         .setup(move |cx, _, f| {
             Box::pin(async move {
                 register_in_guild(&cx.http(), &f.options().commands, GuildId(guild_id)).await?;
-                Ok(State {})
+
+                Ok(State {
+                    uptime: Instant::now(),
+                    system: RwLock::new(System::new()),
+                })
             })
         });
 

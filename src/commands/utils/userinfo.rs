@@ -1,4 +1,4 @@
-use crate::{primitives::Context, utils::time::get_discord_relative_time};
+use crate::{primitives::Context, utils::time::get_relative_time};
 use anyhow::Result;
 use poise::serenity_prelude as serenity;
 
@@ -17,11 +17,9 @@ pub async fn userinfo(
 
     let member = guild.member(cx, user.id).await.unwrap();
 
-    let joined_at_timestamp: i64 = member.joined_at.unwrap().timestamp();
-    let joined_at = get_discord_relative_time(joined_at_timestamp);
+    let joined_at = member.joined_at.unwrap().timestamp();
 
-    let account_age_timestamp: i64 = user.created_at().timestamp();
-    let account_age = get_discord_relative_time(account_age_timestamp);
+    let account_age = user.created_at().timestamp();
 
     let avatar = user
         .avatar_url()
@@ -41,8 +39,16 @@ pub async fn userinfo(
             e.title(format!("Informações do usuário: {user_name}"));
             e.field("🔖 **Tag do discord:**", user_tag, true);
             e.field("💻 **Id de usuário:**", user_id, true);
-            e.field("📅 **Conta criada há:**", account_age, true);
-            e.field("🌟 **Entrou no servidor há:**", joined_at, false);
+            e.field(
+                "📅 **Conta criada há:**",
+                get_relative_time(account_age as u64),
+                true,
+            );
+            e.field(
+                "🌟 **Entrou no servidor há:**",
+                get_relative_time(joined_at as u64),
+                false,
+            );
             e.field("📚 **Cargos:**", roles_str, false);
             e.thumbnail(avatar)
                 .colour(serenity::Colour::DARK_PURPLE)

@@ -17,9 +17,16 @@ pub async fn userinfo(
 
     let member = guild.member(cx, user.id).await.unwrap();
 
+    let nick_in_guild = user.nick_in(&serenity::CacheHttp::http(&cx), cx.guild().unwrap().id).await
+    .unwrap_or(user.name.to_string());
+
     let joined_at = member.joined_at.unwrap().timestamp();
 
     let account_age = user.created_at().timestamp();
+
+    let author_avatar = cx.author()
+        .avatar_url()
+        .unwrap_or_else(|| user.default_avatar_url());
 
     let avatar = user
         .avatar_url()
@@ -36,23 +43,30 @@ pub async fn userinfo(
 
     cx.send(|m| {
         m.embed(|e| {
-            e.title(format!("Informações do usuário: {user_name}"));
-            e.field("🔖 **Tag do discord:**", user_tag, true);
-            e.field("💻 **Id de usuário:**", user_id, true);
-            e.field(
-                "📅 **Conta criada há:**",
-                get_relative_time(account_age as u64),
-                true,
-            );
-            e.field(
-                "🌟 **Entrou no servidor há:**",
-                get_relative_time(joined_at as u64),
-                false,
-            );
-            e.field("📚 **Cargos:**", roles_str, false);
+            e.author(|a: &mut serenity::builder::CreateEmbedAuthor|
+                a.icon_url(member.face())
+                .name(nick_in_guild));
+                e.fields( vec![
+                    ("🔖 **Tag do discord:**", user_tag, true),
+                    ("💻 **Id de usuário:**", user_id, true),
+                    (
+                        "📅 **Conta criada há:**",
+                        get_relative_time(account_age as u64),
+                        true,
+                    ),
+                    (
+                        "🌟 **Entrou no servidor há:**",
+                        get_relative_time(joined_at as u64),
+                        false,
+                    ),
+                    ("📚 **Cargos:**", roles_str, false)
+                ]);
+            e.title(format!("Informações do usuário"));
             e.thumbnail(avatar)
                 .colour(serenity::Colour::DARK_PURPLE)
-                .footer(|f| f.text(format!("Comando pedido por {}", cx.author().tag())))
+                .footer(|f| 
+                    f.icon_url(author_avatar)
+                    .text(format!("Pedido por {}", cx.author().tag())))
         })
     })
     .await?;

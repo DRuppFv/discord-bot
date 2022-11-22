@@ -25,14 +25,9 @@ pub async fn userinfo(
 
     let account_age = user.created_at().timestamp();
 
-    let author_avatar = cx
-        .author()
-        .avatar_url()
-        .unwrap_or_else(|| user.default_avatar_url());
+    let author_avatar = cx.author().face();
 
-    let avatar = user
-        .avatar_url()
-        .unwrap_or_else(|| user.default_avatar_url());
+    let avatar = user.face();
 
     let roles = member.roles(cx).unwrap_or_default().into_iter();
     let mut roles_str = roles

@@ -6,8 +6,13 @@ use std::{env, time::Instant};
 #[poise::command(
     prefix_command,
     slash_command,
-    aliases("sv", "svctl", "systemctl"),
-    subcommands("registro_add_category", "registro_add_role")
+    aliases("sv"),
+    subcommands(
+        "registro_add_category",
+        "registro_add_role",
+        "registro_remove_role",
+        "registro_remove_category"
+    )
 )]
 pub async fn servidor(_ctx: Context<'_>) -> Result<()> {
     Ok(())
@@ -17,7 +22,7 @@ pub async fn servidor(_ctx: Context<'_>) -> Result<()> {
 #[poise::command(
     prefix_command,
     slash_command,
-    aliases("rac", "registroAddCategory", "regAddCat", "registro-enable-category"),
+    aliases("Rac"),
     default_member_permissions = "MANAGE_GUILD"
 )]
 pub async fn registro_add_category(
@@ -83,7 +88,7 @@ pub async fn registro_add_category(
 #[poise::command(
     prefix_command,
     slash_command,
-    aliases("rar", "registroAddRole", "regAddRol", "registro-enable-role"),
+    aliases("rar"),
     default_member_permissions = "MANAGE_GUILD"
 )]
 pub async fn registro_add_role(
@@ -123,5 +128,100 @@ pub async fn registro_add_role(
             m.content(format!("OK in {:.2?}", started.elapsed()))
         })
         .await?;
+    Ok(())
+}
+
+///〔🛠️ Staff〕Remove um cargo da categoria
+#[poise::command(
+    prefix_command,
+    slash_command,
+    aliases("Rrr"),
+    default_member_permissions = "MANAGE_GUILD"
+)]
+pub async fn registro_remove_role(
+    ctx: Context<'_>,
+    #[description = "Por favor indique o nome da categoria"] nome: String,
+    #[description = "Por favor indique um cargo"] cargo: Role,
+) -> Result<()> {
+    let started = Instant::now();
+    let handle = ctx.say(":stopwatch:").await?;
+    let ar_message = ctx
+        .data()
+        .database
+        .auto_rules_messages
+        .read(move |ar| ar.clone().into_iter().find(|i| i.category == nome))?
+        .context("Não foi possivel encontrar a categoria.")?;
+
+    let mut message = ctx
+        .http()
+        .get_message(ar_message.channel_id, ar_message.id)
+        .await?;
+
+    let mut embed = message
+        .embeds
+        .first_mut()
+        .context("Mensagem inválida")?
+        .clone();
+
+    let description = embed
+        .description
+        .as_ref()
+        .context("Invalid message")?
+        .replace(&format!("\n{REGISTRO_ROLE_MARKER} {}", cargo.mention()), "");
+
+    embed.description = Some(description);
+
+    message
+        .edit(ctx.http(), |m| m.set_embed(embed.into()))
+        .await?;
+
+    handle
+        .edit(ctx, |m| {
+            m.content(format!("OK in {:.2?}", started.elapsed()))
+        })
+        .await?;
+    Ok(())
+}
+
+///〔🛠️ Staff〕Remove uma categoria
+#[poise::command(
+    prefix_command,
+    slash_command,
+    aliases("Rrc"),
+    default_member_permissions = "MANAGE_GUILD"
+)]
+pub async fn registro_remove_category(
+    ctx: Context<'_>,
+    #[description = "Por favor indique o nome da categoria"] nome: String,
+) -> Result<()> {
+    let started = Instant::now();
+    let handle = ctx.say(":stopwatch:").await?;
+    let ar_message = ctx
+        .data()
+        .database
+        .auto_rules_messages
+        .read(move |ar| ar.clone().into_iter().find(|i| i.category == nome))?
+        .context("Não foi possivel encontrar a categoria.")?;
+
+    let message = ctx
+        .http()
+        .get_message(ar_message.channel_id, ar_message.id)
+        .await?;
+
+    message.delete(&ctx).await?;
+
+    ctx.data()
+        .database
+        .auto_rules_messages
+        .write(move |ar| ar.retain(|m| m.category != ar_message.category))?;
+
+    ctx.data().database.auto_rules_messages.save()?;
+
+    handle
+        .edit(ctx, |m| {
+            m.content(format!("OK in {:.2?}", started.elapsed()))
+        })
+        .await?;
+
     Ok(())
 }

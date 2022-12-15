@@ -9,7 +9,7 @@ use crate::{
     commands::{
         information::status::status,
         music::musica,
-        staff::{ban::ban, servidor::servidor, unban::unban},
+        staff::{unban::unban, ban::ban, kick::kick, servidor::servidor},
         utils::{nppp::nppp, userinfo::userinfo, web::web},
     },
     jobs::{browser::Browser, Job},
@@ -80,6 +80,7 @@ async fn main() -> Result<()> {
         userinfo(),
         ban(),
         unban(),
+        kick(),
         musica(),
         web(),
         nppp(),

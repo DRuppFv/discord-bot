@@ -19,9 +19,8 @@ pub async fn ban(
         user.ban(&ctx, 0).await?;
     }
 
-    ctx.say(
-        format!("Usuário {} banido!", user.display_name())
-    ).await?;
+    ctx.say(format!("Usuário {} banido!", user.display_name()))
+        .await?;
 
     Ok(())
 }

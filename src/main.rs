@@ -9,7 +9,7 @@ use crate::{
     commands::{
         information::status::status,
         music::musica,
-        staff::{unban::unban, ban::ban, kick::kick, servidor::servidor},
+        staff::{ban::ban, kick::kick, servidor::servidor, unban::unban},
         utils::{nppp::nppp, userinfo::userinfo, web::web},
     },
     jobs::{browser::Browser, Job},

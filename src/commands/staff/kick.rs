@@ -19,9 +19,8 @@ pub async fn kick(
         user.kick(&ctx).await?;
     }
 
-    ctx.say(
-        format!("O usuário '{}' foi removido!", user.user.tag())
-    ).await?;
+    ctx.say(format!("O usuário '{}' foi removido!", user.user.tag()))
+        .await?;
 
     Ok(())
 }
